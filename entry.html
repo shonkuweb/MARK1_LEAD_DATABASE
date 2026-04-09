@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>New Lead Entry | Internal System</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="container animate-in">
+        <header>
+            <div class="logo">MARK1_INTERNAL</div>
+            <button class="hamburger" id="hamburger" aria-label="Toggle navigation">
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
+            <nav class="nav-links" id="navLinks">
+                <a href="index.html">Dashboard</a>
+                <a href="entry.html" class="active">New Entry</a>
+                <a href="settings.html">Settings</a>
+            </nav>
+        </header>
+
+        <main>
+            <h1>New Lead</h1>
+            <p class="subtitle">Capture business information for the internal system.</p>
+
+            <form id="leadForm" class="form-container">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="businessName">Name of the Business</label>
+                        <input type="text" id="businessName" name="businessName" placeholder="Enter business name">
+                    </div>
+                    <div class="form-group">
+                        <label for="category">Category</label>
+                        <select id="category" name="category">
+                            <option value="" disabled selected>Loading categories...</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="contactNumber">Contact Number</label>
+                        <input type="tel" id="contactNumber" name="contactNumber" placeholder="+00 000 000 0000">
+                    </div>
+                    <div class="form-group">
+                        <label for="email">Email Address</label>
+                        <input type="email" id="email" name="email" placeholder="email@business.com">
+                    </div>
+                    <div class="form-group" style="grid-column: span 2;">
+                        <label for="socialLink">Social Media Link</label>
+                        <input type="text" id="socialLink" name="socialLink" placeholder="instagram.com/business">
+                    </div>
+                    <div class="form-group" style="grid-column: span 2;">
+                        <label for="remarks">Remarks</label>
+                        <textarea id="remarks" name="remarks" placeholder="Add any additional notes about the business..."></textarea>
+                    </div>
+
+                    <!-- Custom fields injected here -->
+                    <div id="customFieldsContainer" class="custom-fields-grid"></div>
+                </div>
+
+                <div class="form-actions">
+                    <button type="submit" class="btn">Save Lead</button>
+                    <a href="index.html" class="btn btn-outline">Cancel</a>
+                </div>
+            </form>
+        </main>
+    </div>
+
+    <script type="module" src="js/main.js"></script>
+    <script src="js/nav.js"></script>
+</body>
+</html>

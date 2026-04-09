@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Settings | Internal Lead System</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="container animate-in">
+        <header>
+            <div class="logo">MARK1_INTERNAL</div>
+            <button class="hamburger" id="hamburger" aria-label="Toggle navigation">
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
+            <nav class="nav-links" id="navLinks">
+                <a href="index.html">Dashboard</a>
+                <a href="entry.html">New Entry</a>
+                <a href="settings.html" class="active">Settings</a>
+            </nav>
+        </header>
+
+        <main>
+            <h1>Settings</h1>
+            <p class="subtitle">Manage categories and custom columns. All changes sync live with the database.</p>
+
+            <div class="settings-grid">
+
+                <!-- Category Manager -->
+                <section class="settings-card">
+                    <div class="settings-card-header">
+                        <h3>Categories</h3>
+                        <span class="sync-badge" id="categorySyncBadge">SYNCED</span>
+                    </div>
+                    <p style="color: var(--muted); font-size: 0.85rem; margin-bottom: 1.5rem;">These categories appear in the lead entry form dropdown.</p>
+
+                    <ul id="categoryList" class="settings-list">
+                        <li style="color: var(--muted);">Loading...</li>
+                    </ul>
+
+                    <div class="add-row" style="margin-top: 1.5rem;">
+                        <input type="text" id="newCategory" placeholder="New category name...">
+                        <button id="addCategoryBtn" class="btn" style="padding: 1rem 1.5rem; white-space: nowrap;">Add</button>
+                    </div>
+                </section>
+
+                <!-- Column Manager -->
+                <section class="settings-card">
+                    <div class="settings-card-header">
+                        <h3>Custom Columns</h3>
+                        <span class="sync-badge" id="columnSyncBadge">SYNCED</span>
+                    </div>
+                    <p style="color: var(--muted); font-size: 0.85rem; margin-bottom: 1.5rem;">Custom text fields added here appear in the entry form and dashboard table.</p>
+
+                    <ul id="columnList" class="settings-list">
+                        <li style="color: var(--muted);">Loading...</li>
+                    </ul>
+
+                    <div class="add-row" style="margin-top: 1.5rem;">
+                        <input type="text" id="newColumn" placeholder="New column name (e.g. Website)...">
+                        <button id="addColumnBtn" class="btn" style="padding: 1rem 1.5rem; white-space: nowrap;">Add</button>
+                    </div>
+                </section>
+
+            </div>
+        </main>
+    </div>
+
+    <script type="module" src="js/settings.js"></script>
+    <script src="js/nav.js"></script>
+</body>
+</html>
