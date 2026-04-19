@@ -124,4 +124,27 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (e.key === 'Enter') { await addColumn(newColInput.value); newColInput.value = ''; }
         });
     }
+    // Groq Integration management
+    const groqKeyInput = document.getElementById('groqApiKey');
+    const saveKeyBtn = document.getElementById('saveGroqKeyBtn');
+    
+    // Load existing key
+    if (groqKeyInput) {
+        groqKeyInput.value = localStorage.getItem('NEXUS_GROQ_KEY') || '';
+    }
+
+    if (saveKeyBtn && groqKeyInput) {
+        saveKeyBtn.onclick = () => {
+            const key = groqKeyInput.value.trim();
+            if (key) {
+                localStorage.setItem('NEXUS_GROQ_KEY', key);
+                saveKeyBtn.textContent = 'SAVED';
+                setTimeout(() => { saveKeyBtn.textContent = 'Save'; }, 2000);
+            } else {
+                localStorage.removeItem('NEXUS_GROQ_KEY');
+                saveKeyBtn.textContent = 'REMOVED';
+                setTimeout(() => { saveKeyBtn.textContent = 'Save'; }, 2000);
+            }
+        };
+    }
 });

@@ -18,6 +18,7 @@
             <nav class="nav-links" id="navLinks">
                 <a href="index.html">Dashboard</a>
                 <a href="entry.html">New Entry</a>
+                <a href="ai-upload.html">AI Bulk Upload</a>
                 <a href="settings.html" class="active">Settings</a>
             </nav>
         </header>
@@ -61,6 +62,23 @@
                     <div class="add-row" style="margin-top: 1.5rem;">
                         <input type="text" id="newColumn" placeholder="New column name (e.g. Website)...">
                         <button id="addColumnBtn" class="btn" style="padding: 1rem 1.5rem; white-space: nowrap;">Add</button>
+                    </div>
+                </section>
+
+                <!-- Integrations Manager -->
+                <section class="settings-card">
+                    <div class="settings-card-header">
+                        <h3>Integrations</h3>
+                        <span class="sync-badge" style="background: rgba(255,255,255,0.05); color: var(--muted); border-color: var(--border);">LOCAL</span>
+                    </div>
+                    <p style="color: var(--muted); font-size: 0.85rem; margin-bottom: 1.5rem;">Configure AI API keys. These are stored securely in your browser.</p>
+
+                    <div class="settings-item" style="margin-bottom: 2rem;">
+                        <label class="label-sm" style="display: block; margin-bottom: 0.75rem;">Groq API Key</label>
+                        <div class="add-row">
+                            <input type="password" id="groqApiKey" placeholder="gsk_..." style="flex: 1;">
+                            <button id="saveGroqKeyBtn" class="btn" style="padding: 1rem 1.5rem;">Save</button>
+                        </div>
                     </div>
                 </section>
 

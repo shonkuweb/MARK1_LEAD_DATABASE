@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>AI Lead Extraction | Internal Lead System</title>
+    <!-- We will use the main style.css which will incorporate the AI styles -->
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="container animate-in">
+        <header>
+            <div class="logo">MARK1_INTERNAL</div>
+            <button class="hamburger" id="hamburger" aria-label="Toggle navigation">
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
+            <nav class="nav-links" id="navLinks">
+                <a href="index.html">Dashboard</a>
+                <a href="entry.html">New Entry</a>
+                <a href="ai-upload.html" class="active">AI Bulk Upload</a>
+                <a href="settings.html">Settings</a>
+            </nav>
+        </header>
+
+        <main class="ai-app-wrapper">
+            <div class="dashboard-top">
+                <div>
+                    <h1>AI Lead Extraction</h1>
+                    <p class="subtitle" style="margin-bottom: 0;">Drop screenshots of leads for automated AI data extraction.</p>
+                </div>
+            </div>
+
+            <!-- ── UPLOAD ZONE ─────────────────────────────────────────────────── -->
+            <section class="upload-section" id="upload-section">
+                <label for="image-upload" class="upload-area" id="upload-area">
+                <div class="upload-content">
+                    <div class="upload-icon">
+                    <svg width="52" height="52" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                        <polyline points="17 8 12 3 7 8"/>
+                        <line x1="12" y1="3" x2="12" y2="15"/>
+                    </svg>
+                    </div>
+                    <span class="upload-title">Drop screenshots here</span>
+                    <span class="upload-subtext label-sm">Unlimited uploads · Rate limited · Duplicate filtered</span>
+                    <div class="upload-btn-proxy glass-btn ghost-neon">Browse Files</div>
+                </div>
+                </label>
+                <input type="file" id="image-upload" accept="image/png, image/jpeg" multiple class="hidden">
+            </section>
+
+            <!-- ── STAGING ────────────────────────────────────────────────────── -->
+            <section class="staging-section hidden" id="staging-section">
+                <div class="ai-dashboard-header">
+                <div class="stats-bar">
+                    <div class="stats-pill">
+                    QUEUED <span id="staged-count" class="neon-text" style="margin-left:4px">0</span>
+                    </div>
+                    <div class="stats-pill duplicate-pill hidden" id="duplicate-pill">
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                        <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+                        <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+                    </svg>
+                    <span id="duplicate-count">0</span> duplicates discarded
+                    </div>
+                    <div class="stats-pill checking-pill hidden" id="checking-pill">
+                    <span class="spinner-sm"></span> Checking database…
+                    </div>
+                </div>
+                <button id="analyze-btn" class="glass-btn primary-gradient hidden" onclick="window._nexusAnalyze()">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                    <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                    </svg>
+                    Analyze All
+                </button>
+                </div>
+
+                <div class="staging-grid" id="staging-grid"></div>
+            </section>
+
+            <!-- ── RESULTS ────────────────────────────────────────────────────── -->
+            <section class="results-section hidden" id="results-section">
+                <div class="ai-dashboard-header">
+                <div class="stats-bar">
+                    <div class="stats-pill">
+                    COMPLETED <span id="analyzed-count" class="neon-text" style="margin-left:4px">0</span>/<span id="total-analyze-count">0</span>
+                    </div>
+                </div>
+                <button id="sync-all-btn" class="glass-btn primary-gradient hidden" onclick="window._nexusSyncAll()">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                    <polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
+                    </svg>
+                    Sync All to Database
+                </button>
+                </div>
+
+                <div class="results-grid" id="results-grid"></div>
+            </section>
+        </main>
+    </div>
+
+    <!-- ── CATEGORY MODAL ────────────────────────────────────────────────── -->
+    <div class="ai-modal-overlay hidden" id="category-modal">
+        <div class="ai-modal-box">
+        <div class="ai-modal-header">
+            <h3>Select Category</h3>
+            <p class="ai-modal-sub">Choose a category for all <span id="modal-lead-count">0</span> extracted leads before syncing.</p>
+        </div>
+        <div class="ai-modal-body">
+            <select id="modal-category-select" class="glass-select-full">
+            <option value="" disabled selected>— Select a category —</option>
+            </select>
+        </div>
+        <div class="ai-modal-footer">
+            <button class="glass-btn ghost-neon" onclick="window._nexusCloseModal()">Cancel</button>
+            <button class="glass-btn primary-gradient" id="modal-confirm-btn" onclick="window._nexusConfirmSync()">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6L9 17l-5-5"/></svg>
+            Confirm & Sync
+            </button>
+        </div>
+        </div>
+    </div>
+
+    <!-- Export (floating) -->
+    <button id="export-csv-btn" class="glass-btn ghost-neon hidden">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+        <polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+        </svg>
+        Export CSV
+    </button>
+
+    <!-- ── STAGING CARD TEMPLATE ─────────────────────────────────────────── -->
+    <template id="staging-card-template">
+        <div class="staging-card">
+        <div class="staging-card-info">
+            <div class="staging-icon">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <rect x="3" y="3" width="18" height="18" rx="2"/>
+                <circle cx="8.5" cy="8.5" r="1.5"/>
+                <polyline points="21 15 16 10 5 21"/>
+            </svg>
+            </div>
+            <span class="staging-filename"></span>
+        </div>
+        <button class="staging-delete-btn" title="Remove">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+            </svg>
+        </button>
+        </div>
+    </template>
+
+    <!-- ── RESULT CARD TEMPLATE ──────────────────────────────────────────── -->
+    <template id="result-card-template">
+        <div class="result-card">
+        <div class="card-header">
+            <div class="card-name-row">
+            <h3 class="card-business-name skeleton-box"></h3>
+            <span class="card-status-spinner"></span>
+            </div>
+            <span class="card-instagram skeleton-box"></span>
+        </div>
+        <div class="card-body">
+            <div class="ai-info-row">
+            <span class="ai-label">Phone</span>
+            <span class="ai-value card-phone skeleton-box"></span>
+            </div>
+            <div class="ai-info-row">
+            <span class="ai-label">Email</span>
+            <span class="ai-value card-email skeleton-box"></span>
+            </div>
+            <div class="ai-info-row remarks-row">
+            <span class="ai-label">Remarks</span>
+            <p class="ai-value card-remarks skeleton-box"></p>
+            </div>
+        </div>
+        </div>
+    </template>
+
+    <script type="module" src="js/ai-app.js"></script>
+    <script src="js/nav.js"></script>
+</body>
+</html>
