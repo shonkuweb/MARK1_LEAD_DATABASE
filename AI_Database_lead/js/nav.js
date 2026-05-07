@@ -6,7 +6,6 @@
 
     const MOBILE_BREAKPOINT = 768;
     let isOpen = false;
-    let scrollY = 0;
 
     const backdrop = document.createElement('div');
     backdrop.className = 'nav-backdrop';
@@ -19,23 +18,11 @@
     hamburger.setAttribute('aria-label', 'Open navigation menu');
 
     const lockBodyScroll = () => {
-        scrollY = window.scrollY || window.pageYOffset || 0;
         document.body.classList.add('nav-open');
-        document.body.style.position = 'fixed';
-        document.body.style.top = `-${scrollY}px`;
-        document.body.style.left = '0';
-        document.body.style.right = '0';
-        document.body.style.width = '100%';
     };
 
     const unlockBodyScroll = () => {
         document.body.classList.remove('nav-open');
-        document.body.style.position = '';
-        document.body.style.top = '';
-        document.body.style.left = '';
-        document.body.style.right = '';
-        document.body.style.width = '';
-        window.scrollTo(0, scrollY);
     };
 
     const openMenu = () => {
@@ -65,8 +52,29 @@
 
     backdrop.addEventListener('click', closeMenu);
 
+    const navigateFromLink = (event, link) => {
+        const href = (link.getAttribute('href') || '').trim();
+        if (!href) {
+            closeMenu();
+            return;
+        }
+
+        event.preventDefault();
+        event.stopPropagation();
+
+        if (href.startsWith('#')) {
+            closeMenu();
+            window.location.hash = href;
+            return;
+        }
+
+        window.location.assign(link.href);
+    };
+
     navLinks.querySelectorAll('a').forEach(link => {
-        link.addEventListener('click', closeMenu);
+        link.addEventListener('pointerup', event => navigateFromLink(event, link));
+        link.addEventListener('touchend', event => navigateFromLink(event, link), { passive: false });
+        link.addEventListener('click', event => navigateFromLink(event, link));
     });
 
     document.addEventListener('keydown', e => {
