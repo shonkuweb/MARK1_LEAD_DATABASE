@@ -490,7 +490,7 @@ textarea {
     }
     to {
         opacity: 1;
-        transform: translateY(0);
+        transform: none;
     }
 }
 
@@ -793,9 +793,8 @@ input.has-error {
 
     .nav-links {
         position: fixed;
-        top: 0;
-        right: 0;
-        width: 100%;
+        inset: 0;
+        width: 100vw;
         height: 100vh;
         height: 100dvh;
         background: var(--bg);
@@ -803,13 +802,17 @@ input.has-error {
         align-items: center;
         justify-content: center;
         gap: 2.5rem;
-        z-index: 1000;
+        z-index: 2000;
         transform: translateX(100%);
         transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        visibility: hidden;
+        pointer-events: none;
     }
 
     .nav-links.open {
         transform: translateX(0);
+        visibility: visible;
+        pointer-events: auto;
     }
 
     .nav-links a {
