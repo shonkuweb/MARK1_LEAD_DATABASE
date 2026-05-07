@@ -6,6 +6,7 @@
 
     const MOBILE_BREAKPOINT = 768;
     let isOpen = false;
+    let isNavigating = false;
 
     const backdrop = document.createElement('div');
     backdrop.className = 'nav-backdrop';
@@ -53,6 +54,7 @@
     backdrop.addEventListener('click', closeMenu);
 
     const navigateFromLink = (event, link) => {
+        if (isNavigating) return;
         const href = (link.getAttribute('href') || '').trim();
         if (!href) {
             closeMenu();
@@ -61,21 +63,33 @@
 
         event.preventDefault();
         event.stopPropagation();
+        isNavigating = true;
 
         if (href.startsWith('#')) {
             closeMenu();
             window.location.hash = href;
+            isNavigating = false;
             return;
         }
 
-        window.location.assign(link.href);
+        window.location.href = href;
     };
 
-    navLinks.querySelectorAll('a').forEach(link => {
-        link.addEventListener('pointerup', event => navigateFromLink(event, link));
-        link.addEventListener('touchend', event => navigateFromLink(event, link), { passive: false });
-        link.addEventListener('click', event => navigateFromLink(event, link));
-    });
+    navLinks.addEventListener('touchstart', event => {
+        const link = event.target.closest('a');
+        if (link) navigateFromLink(event, link);
+    }, { capture: true, passive: false });
+
+    navLinks.addEventListener('pointerdown', event => {
+        if (event.pointerType === 'touch') return;
+        const link = event.target.closest('a');
+        if (link) navigateFromLink(event, link);
+    }, { capture: true });
+
+    navLinks.addEventListener('click', event => {
+        const link = event.target.closest('a');
+        if (link) navigateFromLink(event, link);
+    }, { capture: true });
 
     document.addEventListener('keydown', e => {
         if (e.key === 'Escape' && isOpen) closeMenu();
