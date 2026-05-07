@@ -44,9 +44,8 @@ async function init() {
     });
   } catch (e) { console.warn('Settings unavailable:', e); }
 
-  uploadArea?.addEventListener('click', () => imageUpload?.click());
   uploadArea?.addEventListener('dragover', e => { e.preventDefault(); uploadArea.classList.add('dragover'); });
-  uploadArea?.addEventListener('dragleave', () => uploadArea.classList.remove('dragleave'));
+  uploadArea?.addEventListener('dragleave', () => uploadArea.classList.remove('dragover'));
   uploadArea?.addEventListener('drop', e => {
     e.preventDefault(); uploadArea.classList.remove('dragover');
     if (e.dataTransfer.files?.length) handleFiles(e.dataTransfer.files);

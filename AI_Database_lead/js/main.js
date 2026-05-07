@@ -31,6 +31,42 @@ const CORE_FIELDS = [
 let allLeads = [];
 let appSettings = { categories: DEFAULT_CATEGORIES, customFields: [] };
 let activeFilter = null; // Currently selected category filter
+let activeStatusFilter = '';
+let activeSearchTerm = '';
+let activeRemarkLeadId = null;
+
+const STATUS_CONFIG = {
+    new: { label: 'New', color: '#5bc0ff' },
+    contacted: { label: 'Contacted', color: '#c084fc' },
+    interested: { label: 'Interested', color: '#facc15' },
+    'not interested': { label: 'Not Interested', color: '#fb7185' },
+    success: { label: 'Success', color: '#4ade80' },
+    'on follow up': { label: 'On Follow Up', color: '#f97316' }
+};
+const STATUS_ORDER = ['new', 'contacted', 'interested', 'not interested', 'on follow up', 'success'];
+
+const escapeHtml = (value = '') => String(value)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+
+const normalizeStatus = (status = '') => {
+    const key = String(status).trim().toLowerCase();
+    return STATUS_CONFIG[key] ? key : 'new';
+};
+
+const getStatusBadge = (status) => {
+    const key = normalizeStatus(status);
+    const cfg = STATUS_CONFIG[key];
+    return `<span class="status-badge" style="color:${cfg.color}"><span class="status-dot" style="background:${cfg.color}"></span>${cfg.label}</span>`;
+};
+
+const getStatusSelectOptions = (selectedStatus = 'new') => STATUS_ORDER.map(statusKey => {
+    const cfg = STATUS_CONFIG[statusKey];
+    return `<option value="${statusKey}" ${statusKey === normalizeStatus(selectedStatus) ? 'selected' : ''}>${cfg.label}</option>`;
+}).join('');
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -94,16 +130,33 @@ const renderStats = (leads, settings) => {
 };
 
 // Get leads filtered by active category
-const getFilteredLeads = () => {
-    if (!activeFilter) return allLeads;
-    return allLeads.filter(l => l.category === activeFilter);
-};
+const getFilteredLeads = () => allLeads.filter(lead => {
+    const categoryMatch = !activeFilter || lead.category === activeFilter;
+    const statusMatch = !activeStatusFilter || normalizeStatus(lead.status) === activeStatusFilter;
+    if (!activeSearchTerm) return categoryMatch && statusMatch;
+
+    const query = activeSearchTerm.toLowerCase();
+    const name = (lead.businessName || '').toLowerCase();
+    const phone = (lead.contactNumber || '').toLowerCase();
+    const insta = (lead.instagram || lead.instagramUrl || '').toLowerCase();
+    const searchMatch = name.includes(query) || phone.includes(query) || insta.includes(query);
+    return categoryMatch && statusMatch && searchMatch;
+});
 
 const renderTableHeaders = (settings) => {
     const headersRow = document.getElementById('tableHeaders');
     if (!headersRow) return;
     const allCols = [...CORE_FIELDS, ...settings.customFields.map(f => ({ key: f, label: f }))];
-    headersRow.innerHTML = allCols.map(f => `<th>${f.label}</th>`).join('') + '<th>Actions</th>';
+    headersRow.innerHTML = allCols.map(f => `<th>${f.label}</th>`).join('') + '<th>Status</th><th>Actions</th>';
+};
+
+const renderStatusLegend = () => {
+    const legend = document.getElementById('statusLegend');
+    if (!legend) return;
+    legend.innerHTML = STATUS_ORDER.map(key => {
+        const cfg = STATUS_CONFIG[key];
+        return `<span class="status-legend-chip" style="color:${cfg.color}"><span class="status-dot" style="background:${cfg.color}"></span>${cfg.label}</span>`;
+    }).join('');
 };
 
 const renderLeadsTable = (leads, settings) => {
@@ -121,27 +174,43 @@ const renderLeadsTable = (leads, settings) => {
 
     const allCols = [...CORE_FIELDS, ...settings.customFields.map(f => ({ key: f, label: f }))];
 
-    leads.forEach(lead => {
+    const grouped = STATUS_ORDER.map(key => ({
+        key,
+        title: STATUS_CONFIG[key].label,
+        color: STATUS_CONFIG[key].color,
+        leads: leads.filter(lead => normalizeStatus(lead.status) === key)
+    })).filter(group => group.leads.length > 0);
+
+    grouped.forEach(group => {
+        const sectionRow = document.createElement('tr');
+        sectionRow.className = 'section-row';
+        sectionRow.innerHTML = `<td colspan="${allCols.length + 2}">
+            <div class="status-section-title"><span class="status-dot" style="background:${group.color}"></span>${group.title} (${group.leads.length})</div>
+        </td>`;
+        leadsBody.appendChild(sectionRow);
+
+        group.leads.forEach(lead => {
         const row = document.createElement('tr');
         const cells = allCols.map(col => {
             if (col.key === 'category') return `<td><span class="tag">${lead.category || '-'}</span></td>`;
             if (col.key === 'businessName') return `<td style="font-weight:600;">${lead.businessName || '-'}</td>`;
             if (col.key === 'remarks') {
-                const hasRemarks = lead.remarks && lead.remarks.trim();
-                return hasRemarks
-                    ? `<td><button class="remark-btn" data-remark="${lead.remarks.replace(/"/g, '&quot;')}" data-name="${(lead.businessName || '').replace(/"/g, '&quot;')}" style="background:transparent;border:1px solid var(--border);color:var(--muted);padding:0.3rem 0.7rem;font-size:0.7rem;cursor:pointer;text-transform:uppercase;letter-spacing:0.05em;transition:0.2s;">View</button></td>`
-                    : `<td style="color:#333;">—</td>`;
+                return `<td><button class="remark-btn" data-id="${lead.id}" data-remark="${(lead.remarks || '').replace(/"/g, '&quot;')}" data-name="${(lead.businessName || '').replace(/"/g, '&quot;')}" style="background:transparent;border:1px solid var(--border);color:var(--muted);padding:0.3rem 0.7rem;font-size:0.7rem;cursor:pointer;text-transform:uppercase;letter-spacing:0.05em;transition:0.2s;">View / Edit</button></td>`;
             }
             if (col.key === 'date') return `<td style="color:var(--muted);font-size:0.8rem;">${lead.date || 'Just Added'}</td>`;
             return `<td>${lead[col.key] || '-'}</td>`;
         }).join('');
 
         row.innerHTML = cells + `
-            <td style="display:flex;gap:0.5rem;">
+            <td>
+                <select class="status-select" data-id="${lead.id}" style="border-color:${STATUS_CONFIG[normalizeStatus(lead.status)].color};color:${STATUS_CONFIG[normalizeStatus(lead.status)].color};">${getStatusSelectOptions(lead.status)}</select>
+            </td>
+            <td style="display:flex;gap:0.5rem;align-items:flex-start;flex-direction:column;">
                 <button class="edit-btn" data-id="${lead.id}" style="background:var(--fg);border:none;color:var(--bg);padding:0.4rem 0.8rem;font-size:0.7rem;cursor:pointer;font-weight:600;">EDIT</button>
                 <button class="delete-btn" data-id="${lead.id}" style="background:transparent;border:1px solid #333;color:#666;padding:0.4rem 0.8rem;font-size:0.7rem;cursor:pointer;">DELETE</button>
             </td>`;
         leadsBody.appendChild(row);
+        });
     });
 
     // ── Render Mobile Cards ──────────────────────────────────────────────
@@ -157,7 +226,19 @@ const renderMobileCards = (leads, allCols) => {
     if (!cardsEl) return;
     cardsEl.innerHTML = '';
 
-    leads.forEach(lead => {
+    const grouped = STATUS_ORDER.map(key => ({
+        key,
+        title: STATUS_CONFIG[key].label,
+        color: STATUS_CONFIG[key].color,
+        leads: leads.filter(lead => normalizeStatus(lead.status) === key)
+    })).filter(group => group.leads.length > 0);
+
+    grouped.forEach(group => {
+        const section = document.createElement('section');
+        section.className = 'lead-card-section';
+        section.innerHTML = `<div class="lead-card-section-title"><span class="status-dot" style="background:${group.color}"></span>${group.title} (${group.leads.length})</div>`;
+
+        group.leads.forEach(lead => {
         const fieldsHTML = allCols
             .filter(col => col.key !== 'businessName') // name shown in header
             .map(col => {
@@ -166,10 +247,7 @@ const renderMobileCards = (leads, allCols) => {
                     value = `<span class="tag">${lead.category}</span>`;
                 }
                 if (col.key === 'remarks') {
-                    const hasRemarks = lead.remarks && lead.remarks.trim();
-                    value = hasRemarks
-                        ? `<button class="remark-btn" data-remark="${lead.remarks.replace(/"/g, '&quot;')}" data-name="${(lead.businessName || '').replace(/"/g, '&quot;')}" style="background:transparent;border:1px solid var(--border);color:var(--muted);padding:0.25rem 0.6rem;font-size:0.7rem;cursor:pointer;text-transform:uppercase;letter-spacing:0.05em;">View</button>`
-                        : '—';
+                    value = `<button class="remark-btn" data-id="${lead.id}" data-remark="${(lead.remarks || '').replace(/"/g, '&quot;')}" data-name="${(lead.businessName || '').replace(/"/g, '&quot;')}" style="background:transparent;border:1px solid var(--border);color:var(--muted);padding:0.25rem 0.6rem;font-size:0.7rem;cursor:pointer;text-transform:uppercase;letter-spacing:0.05em;">View / Edit</button>`;
                 }
                 return `
                     <div class="lead-card-field">
@@ -183,16 +261,24 @@ const renderMobileCards = (leads, allCols) => {
         card.innerHTML = `
             <div class="lead-card-header">
                 <span class="lead-card-name">${lead.businessName || 'Untitled'}</span>
-                <span class="tag">${lead.category || '-'}</span>
+                ${getStatusBadge(lead.status)}
             </div>
             <div class="lead-card-fields">
+                <div class="lead-card-field">
+                    <span class="lead-card-field-label">Status</span>
+                    <span class="lead-card-field-value">
+                        <select class="status-select" data-id="${lead.id}" style="border-color:${STATUS_CONFIG[normalizeStatus(lead.status)].color};color:${STATUS_CONFIG[normalizeStatus(lead.status)].color};">${getStatusSelectOptions(lead.status)}</select>
+                    </span>
+                </div>
                 ${fieldsHTML}
             </div>
             <div class="lead-card-actions">
                 <button class="edit-btn btn" data-id="${lead.id}" style="background:var(--fg);color:var(--bg);border:none;font-weight:600;font-size:0.75rem;">EDIT</button>
                 <button class="delete-btn btn btn-outline" data-id="${lead.id}" style="font-size:0.75rem;">DELETE</button>
             </div>`;
-        cardsEl.appendChild(card);
+        section.appendChild(card);
+        });
+        cardsEl.appendChild(section);
     });
 };
 
@@ -231,19 +317,63 @@ const bindLeadActions = () => {
     // Remark Popup
     document.querySelectorAll('.remark-btn').forEach(btn => {
         btn.onclick = e => {
+            const docId = e.target.getAttribute('data-id');
             const remark = e.target.getAttribute('data-remark');
             const name = e.target.getAttribute('data-name');
             const modal = document.getElementById('remarkModal');
             const titleEl = document.getElementById('remarkTitle');
-            const bodyEl = document.getElementById('remarkBody');
+            const inputEl = document.getElementById('remarkInput');
+            const saveBtn = document.getElementById('saveRemark');
             const closeBtn = document.getElementById('closeRemark');
+            activeRemarkLeadId = docId;
             if (titleEl) titleEl.textContent = name;
-            if (bodyEl) bodyEl.textContent = remark;
+            if (inputEl) inputEl.value = remark || '';
             modal.classList.add('active');
             closeBtn.onclick = () => modal.classList.remove('active');
             modal.onclick = ev => { if (ev.target === modal) modal.classList.remove('active'); };
+            if (saveBtn) {
+                saveBtn.onclick = async () => {
+                    if (!activeRemarkLeadId || !inputEl) return;
+                    const original = saveBtn.textContent;
+                    saveBtn.textContent = 'Saving...';
+                    saveBtn.disabled = true;
+                    try {
+                        const nextRemark = inputEl.value.trim();
+                        await updateDoc(doc(db, LEADS_COLLECTION, activeRemarkLeadId), { remarks: nextRemark, updatedAt: serverTimestamp() });
+                        modal.classList.remove('active');
+                    } catch (err) {
+                        alert(`Remark update failed: ${err.message}`);
+                    } finally {
+                        saveBtn.textContent = original;
+                        saveBtn.disabled = false;
+                    }
+                };
+            }
         };
     });
+
+    // Status updates
+    document.querySelectorAll('.status-select').forEach(select => {
+        select.onchange = async e => {
+            const docId = e.target.getAttribute('data-id');
+            const nextStatus = normalizeStatus(e.target.value);
+            if (!docId) return;
+            const previous = allLeads.find(l => l.id === docId)?.status || 'new';
+            const cfg = STATUS_CONFIG[nextStatus];
+            e.target.style.borderColor = cfg.color;
+            e.target.style.color = cfg.color;
+            allLeads = allLeads.map(lead => lead.id === docId ? { ...lead, status: nextStatus } : lead);
+            renderLeadsTable(getFilteredLeads(), appSettings);
+            try {
+                await updateDoc(doc(db, LEADS_COLLECTION, docId), { status: nextStatus, updatedAt: serverTimestamp() });
+            } catch (err) {
+                allLeads = allLeads.map(lead => lead.id === docId ? { ...lead, status: previous } : lead);
+                renderLeadsTable(getFilteredLeads(), appSettings);
+                alert(`Status update failed: ${err.message}`);
+            }
+        };
+    });
+
 };
 
 // ─── Entry Form Logic ─────────────────────────────────────────────────────────
@@ -281,12 +411,51 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // ─── Dashboard mode ──────────────────────────────────────────────────
     if (leadsBody) {
+        const statusFilterEl = document.getElementById('statusFilter');
+        const searchEl = document.getElementById('leadSearch');
+        const clearFiltersBtn = document.getElementById('clearFilters');
+
+        if (statusFilterEl) {
+            statusFilterEl.innerHTML = `<option value="">All Statuses</option>` +
+                STATUS_ORDER.map(key => `<option value="${key}">${STATUS_CONFIG[key].label}</option>`).join('');
+            statusFilterEl.addEventListener('change', () => {
+                activeStatusFilter = statusFilterEl.value;
+                renderLeadsTable(getFilteredLeads(), appSettings);
+            });
+        }
+
+        if (searchEl) {
+            searchEl.addEventListener('input', () => {
+                activeSearchTerm = searchEl.value.trim();
+                renderLeadsTable(getFilteredLeads(), appSettings);
+            });
+        }
+
+        if (clearFiltersBtn) {
+            clearFiltersBtn.addEventListener('click', () => {
+                activeFilter = null;
+                activeStatusFilter = '';
+                activeSearchTerm = '';
+                if (searchEl) searchEl.value = '';
+                if (statusFilterEl) statusFilterEl.value = '';
+                renderStats(allLeads, appSettings);
+                renderLeadsTable(getFilteredLeads(), appSettings);
+            });
+        }
+
         renderTableHeaders(appSettings);
+        renderStatusLegend();
 
         onSnapshot(collection(db, LEADS_COLLECTION), (snapshot) => {
             allLeads = [];
             snapshot.forEach(d => allLeads.push({ id: d.id, ...d.data() }));
             allLeads.sort((a, b) => (b.createdAt?.toMillis() || 0) - (a.createdAt?.toMillis() || 0));
+            allLeads = allLeads.map(lead => ({ ...lead, status: normalizeStatus(lead.status) }));
+            allLeads.forEach(lead => {
+                if (!lead.status || !STATUS_CONFIG[String(lead.status).toLowerCase()]) {
+                    updateDoc(doc(db, LEADS_COLLECTION, lead.id), { status: 'new', updatedAt: serverTimestamp() }).catch(() => {});
+                }
+            });
             renderStats(allLeads, appSettings);
             renderLeadsTable(getFilteredLeads(), appSettings);
         }, err => {
@@ -371,7 +540,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     await updateDoc(doc(db, LEADS_COLLECTION, editModeId), { ...data, updatedAt: serverTimestamp() });
                 } else {
                     const displayDate = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-                    await addDoc(collection(db, LEADS_COLLECTION), { ...data, date: displayDate, createdAt: serverTimestamp() });
+                    await addDoc(collection(db, LEADS_COLLECTION), { ...data, status: 'new', date: displayDate, createdAt: serverTimestamp() });
                 }
                 window.location.href = 'index.html';
             } catch (err) {

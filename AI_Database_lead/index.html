@@ -32,6 +32,24 @@
                 <a href="entry.html" class="btn">+ New Lead</a>
             </div>
 
+            <section class="filter-panel">
+                <div class="search-wrap">
+                    <input
+                        type="search"
+                        id="leadSearch"
+                        placeholder="Search by name, phone, or Instagram URL"
+                        autocomplete="off"
+                    >
+                </div>
+                <div class="filter-controls">
+                    <select id="statusFilter">
+                        <option value="">All Statuses</option>
+                    </select>
+                    <button id="clearFilters" class="btn btn-outline" type="button">Reset Filters</button>
+                </div>
+            </section>
+            <div id="statusLegend" class="status-legend"></div>
+
             <!-- Stats Section -->
             <div id="statsBar" class="stats-bar">
                 <div class="stat-card">
@@ -80,9 +98,12 @@
             <span class="remark-label">Remarks for</span>
             <h2 id="remarkTitle" style="font-family: var(--font-serif); margin-bottom: 1.5rem;">—</h2>
             <div class="remark-body-wrapper">
-                <p id="remarkBody" class="remark-body">—</p>
+                <textarea id="remarkInput" class="remark-body" placeholder="Write remarks..."></textarea>
             </div>
-            <button id="closeRemark" class="btn" style="margin-top: 2rem; padding: 0.8rem 2rem;">Close</button>
+            <div style="display:flex;gap:0.75rem;margin-top:1.25rem;">
+                <button id="saveRemark" class="btn" style="padding: 0.8rem 2rem;">Save</button>
+                <button id="closeRemark" class="btn btn-outline" style="padding: 0.8rem 2rem;">Close</button>
+            </div>
         </div>
     </div>
 
